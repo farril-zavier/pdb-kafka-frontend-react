@@ -189,6 +189,15 @@ class App extends Component {
         };
     }
 
+    componentDidMount() {
+        const socket = new WebSocket(
+            "ws://" + window.location.hostname + ":8000" + "/visualization/"
+        );
+        socket.onmessage = function (event) {
+            console.log(event.data);
+        };
+    }
+
     render() {
         return (
             <div>
