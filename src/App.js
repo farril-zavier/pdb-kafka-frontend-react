@@ -189,21 +189,12 @@ class App extends Component {
         };
     }
 
-    componentDidMount() {
-        const socket = new WebSocket(
-            "ws://" + window.location.hostname + ":8000" + "/visualization/"
-        );
-        socket.onmessage = function (event) {
-            console.log(event.data);
-        };
-    }
-
     render() {
         return (
             <div>
                 <HighchartsReact highcharts={Highcharts} options={this.state.lineChartOptions} />
-                <br />
-                <HighchartsReact highcharts={Highcharts} options={this.state.barChartOptions} />
+                {/* <br />
+                <HighchartsReact highcharts={Highcharts} options={this.state.barChartOptions} /> */}
             </div>
         );
     }
