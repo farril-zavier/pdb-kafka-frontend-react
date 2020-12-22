@@ -1,4 +1,6 @@
 import React, { Component } from "react";
+import Highcharts from "highcharts";
+import HighchartsReact from "highcharts-react-official";
 import clsx from "clsx";
 import { withStyles } from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -23,7 +25,6 @@ import { createMuiTheme } from "@material-ui/core/styles";
 import { ThemeProvider } from "@material-ui/styles";
 import { mainListItems, secondaryListItems } from "./listItems";
 import Orders from "./Orders";
-import App from "./App";
 import MostSalesProduct from "./MostSalesProduct";
 
 const drawerWidth = 240;
@@ -114,6 +115,8 @@ const themePDB = createMuiTheme({
     },
 });
 
+const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 const socket = new WebSocket("ws://" + window.location.hostname + ":8000" + "/visualization/");
 
 class Dashboard extends Component {
@@ -125,10 +128,119 @@ class Dashboard extends Component {
             newestRating: {},
             newestAverageRating: {},
             newestAverageAge: {},
+
+            chart1Options: {
+                title: {
+                    text: "Total Average Product Rating",
+                },
+                chart: {
+                    type: "line",
+                },
+                yAxis: {
+                    title: {
+                        text: "Average Rating",
+                    },
+                },
+                xAxis: {
+                    title: {
+                        text: "Periode",
+                    },
+                    categories: [],
+                },
+                series: [
+                    {
+                        name: "Average Rating",
+                        data: [],
+                    },
+                ],
+                responsive: {
+                    rules: [
+                        {
+                            condition: {
+                                maxWidth: 500,
+                            },
+                            chartOptions: {
+                                legend: {
+                                    layout: "horizontal",
+                                    align: "center",
+                                    verticalAlign: "bottom",
+                                },
+                            },
+                        },
+                    ],
+                },
+            },
+
+            chart2Options: {
+                title: {
+                    text: "Solar Employment Growth by Sector, 2010-2016",
+                },
+                yAxis: {
+                    title: {
+                        text: "Number of Employees",
+                    },
+                },
+                xAxis: {
+                    accessibility: {
+                        rangeDescription: "Range: 2010 to 2017",
+                    },
+                },
+                legend: {
+                    layout: "vertical",
+                    align: "right",
+                    verticalAlign: "middle",
+                },
+                plotOptions: {
+                    series: {
+                        label: {
+                            connectorAllowed: false,
+                        },
+                        pointStart: 2010,
+                    },
+                },
+                series: [
+                    {
+                        name: "Installation",
+                        data: [43934, 52503, 57177, 69658, 97031, 119931, 137133, 154175],
+                    },
+                    {
+                        name: "Manufacturing",
+                        data: [24916, 24064, 29742, 29851, 32490, 30282, 38121, 40434],
+                    },
+                    {
+                        name: "Sales & Distribution",
+                        data: [11744, 17722, 16005, 19771, 20185, 24377, 32147, 39387],
+                    },
+                    {
+                        name: "Project Development",
+                        data: [null, null, 7988, 12169, 15112, 22452, 34400, 34227],
+                    },
+                    {
+                        name: "Other",
+                        data: [12908, 5948, 8105, 11248, 8989, 11816, 18274, 18111],
+                    },
+                ],
+                responsive: {
+                    rules: [
+                        {
+                            condition: {
+                                maxWidth: 500,
+                            },
+                            chartOptions: {
+                                legend: {
+                                    layout: "horizontal",
+                                    align: "center",
+                                    verticalAlign: "bottom",
+                                },
+                            },
+                        },
+                    ],
+                },
+            },
         };
     }
 
-    componentWillMount() {
+    componentDidMount() {
         fetch("http://localhost:8000/");
 
         socket.onopen = () => {
@@ -143,9 +255,59 @@ class Dashboard extends Component {
                     newestRating: data.message,
                 });
             } else if (data.type === "average_rating") {
-                this.setState({
-                    newestAverageRating: data.message,
-                });
+                this.setState(
+                    {
+                        newestAverageRating: data.message,
+                    },
+                    () => {
+                        const { categories } = this.state.chart1Options.xAxis;
+                        const { data } = this.state.chart1Options.series[0];
+
+                        if (categories !== undefined && data !== undefined) {
+                            if (categories.length >= 10 && data.length >= 10) {
+                                categories.shift();
+                                data.shift();
+                            }
+
+                            const timestamp = this.state.newestAverageRating.timestamp;
+                            const averageRating = this.state.newestAverageRating.average_rating;
+                            var datetime = new Date(timestamp);
+                            var month = months[datetime.getMonth()];
+                            var date = datetime.getDate();
+                            var hours = datetime.getHours();
+                            var mins = datetime.getMinutes();
+                            var secs = datetime.getSeconds();
+                            var millis = datetime.getMilliseconds();
+
+                            var dateString =
+                                month +
+                                " " +
+                                date +
+                                " " +
+                                hours +
+                                ":" +
+                                mins +
+                                ":" +
+                                secs +
+                                "." +
+                                millis;
+
+                            categories.push(dateString);
+                            data.push(averageRating);
+                            this.setState({
+                                chart1Options: {
+                                    xAxis: {
+                                        title: {
+                                            text: "Periode",
+                                        },
+                                        categories: categories,
+                                    },
+                                    series: [{ name: "Average Rating", data: data }],
+                                },
+                            });
+                        }
+                    }
+                );
             } else if (data.type === "average_age") {
                 this.setState({
                     newestAverageAge: data.message,
@@ -269,13 +431,19 @@ class Dashboard extends Component {
                                 {/* Line Chart 1 */}
                                 <Grid item xs={12} md={4} lg={6}>
                                     <Paper className={classes.paper}>
-                                        <App />
+                                        <HighchartsReact
+                                            highcharts={Highcharts}
+                                            options={this.state.chart1Options}
+                                        />
                                     </Paper>
                                 </Grid>
                                 {/* Line Chart 2 */}
                                 <Grid item xs={12} md={4} lg={6}>
                                     <Paper className={classes.paper}>
-                                        <App />
+                                        <HighchartsReact
+                                            highcharts={Highcharts}
+                                            options={this.state.chart2Options}
+                                        />
                                     </Paper>
                                 </Grid>
                                 {/* Recent Orders */}
