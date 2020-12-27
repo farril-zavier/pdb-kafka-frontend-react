@@ -20,11 +20,17 @@ import Link from "@material-ui/core/Link";
 import MenuIcon from "@material-ui/icons/Menu";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import NotificationsIcon from "@material-ui/icons/Notifications";
+import Table from "@material-ui/core/Table";
+import TableBody from "@material-ui/core/TableBody";
+import TableCell from "@material-ui/core/TableCell";
+import TableHead from "@material-ui/core/TableHead";
+import TableRow from "@material-ui/core/TableRow";
+import Fade from "@material-ui/core/Fade";
+import Title from "./Title";
 import { teal, pink } from "@material-ui/core/colors";
 import { createMuiTheme } from "@material-ui/core/styles";
 import { ThemeProvider } from "@material-ui/styles";
 import { mainListItems, secondaryListItems } from "./listItems";
-import Orders from "./Orders";
 import MostSalesProduct from "./MostSalesProduct";
 
 const drawerWidth = 240;
@@ -106,6 +112,9 @@ const styles = (theme) => ({
     fixedHeight: {
         height: 240,
     },
+    seeMore: {
+        marginTop: theme.spacing(3),
+    },
 });
 
 const themePDB = createMuiTheme({
@@ -125,7 +134,8 @@ class Dashboard extends Component {
 
         this.state = {
             open: true,
-            newestRating: {},
+            recentReviews: [],
+            newestReview: {},
             newestAverageRating: {},
             newestAverageAge: {},
 
@@ -138,12 +148,14 @@ class Dashboard extends Component {
                 },
                 yAxis: {
                     title: {
-                        text: "Average Rating",
+                        text: "Rating",
                     },
+                    min: 0,
+                    max: 5,
                 },
                 xAxis: {
                     title: {
-                        text: "Periode",
+                        text: "Timestamp",
                     },
                     categories: [],
                 },
@@ -173,51 +185,28 @@ class Dashboard extends Component {
 
             chart2Options: {
                 title: {
-                    text: "Solar Employment Growth by Sector, 2010-2016",
+                    text: "Average Customer Age",
+                },
+                chart: {
+                    type: "line",
                 },
                 yAxis: {
                     title: {
-                        text: "Number of Employees",
+                        text: "Age",
                     },
+                    min: 0,
+                    max: 100,
                 },
                 xAxis: {
-                    accessibility: {
-                        rangeDescription: "Range: 2010 to 2017",
+                    title: {
+                        text: "Timestamp",
                     },
-                },
-                legend: {
-                    layout: "vertical",
-                    align: "right",
-                    verticalAlign: "middle",
-                },
-                plotOptions: {
-                    series: {
-                        label: {
-                            connectorAllowed: false,
-                        },
-                        pointStart: 2010,
-                    },
+                    categories: [],
                 },
                 series: [
                     {
-                        name: "Installation",
-                        data: [43934, 52503, 57177, 69658, 97031, 119931, 137133, 154175],
-                    },
-                    {
-                        name: "Manufacturing",
-                        data: [24916, 24064, 29742, 29851, 32490, 30282, 38121, 40434],
-                    },
-                    {
-                        name: "Sales & Distribution",
-                        data: [11744, 17722, 16005, 19771, 20185, 24377, 32147, 39387],
-                    },
-                    {
-                        name: "Project Development",
-                        data: [null, null, 7988, 12169, 15112, 22452, 34400, 34227],
-                    },
-                    {
-                        name: "Other",
-                        data: [12908, 5948, 8105, 11248, 8989, 11816, 18274, 18111],
+                        name: "Average Age",
+                        data: [],
                     },
                 ],
                 responsive: {
@@ -251,9 +240,49 @@ class Dashboard extends Component {
             console.log(data);
 
             if (data.type === "rating") {
-                this.setState({
-                    newestRating: data.message,
-                });
+                const newestReview = data.message.after;
+                newestReview.show = true;
+                this.setState(
+                    {
+                        newestReview: newestReview,
+                    },
+                    () => {
+                        const { recentReviews } = this.state;
+                        if (recentReviews.length >= 5) {
+                            recentReviews[0].show = false;
+                            this.setState(
+                                {
+                                    recentReviews: recentReviews,
+                                },
+                                () => {
+                                    setTimeout(() => {
+                                        const { recentReviews } = this.state;
+                                        recentReviews.shift();
+                                        this.setState(
+                                            {
+                                                recentReviews: recentReviews,
+                                            },
+                                            () => {
+                                                setTimeout(() => {
+                                                    const { recentReviews } = this.state;
+                                                    recentReviews.push(newestReview);
+                                                    this.setState({
+                                                        recentReviews: recentReviews,
+                                                    });
+                                                }, 500);
+                                            }
+                                        );
+                                    }, 300);
+                                }
+                            );
+                        } else {
+                            recentReviews.push(newestReview);
+                            this.setState({
+                                recentReviews: recentReviews,
+                            });
+                        }
+                    }
+                );
             } else if (data.type === "average_rating") {
                 this.setState(
                     {
@@ -298,7 +327,7 @@ class Dashboard extends Component {
                                 chart1Options: {
                                     xAxis: {
                                         title: {
-                                            text: "Periode",
+                                            text: "Timestamp",
                                         },
                                         categories: categories,
                                     },
@@ -309,9 +338,59 @@ class Dashboard extends Component {
                     }
                 );
             } else if (data.type === "average_age") {
-                this.setState({
-                    newestAverageAge: data.message,
-                });
+                this.setState(
+                    {
+                        newestAverageAge: data.message,
+                    },
+                    () => {
+                        const { categories } = this.state.chart2Options.xAxis;
+                        const { data } = this.state.chart2Options.series[0];
+
+                        if (categories !== undefined && data !== undefined) {
+                            if (categories.length >= 10 && data.length >= 10) {
+                                categories.shift();
+                                data.shift();
+                            }
+
+                            const timestamp = this.state.newestAverageAge.timestamp;
+                            const averageAge = this.state.newestAverageAge.average_age;
+                            var datetime = new Date(timestamp);
+                            var month = months[datetime.getMonth()];
+                            var date = datetime.getDate();
+                            var hours = datetime.getHours();
+                            var mins = datetime.getMinutes();
+                            var secs = datetime.getSeconds();
+                            var millis = datetime.getMilliseconds();
+
+                            var dateString =
+                                month +
+                                " " +
+                                date +
+                                " " +
+                                hours +
+                                ":" +
+                                mins +
+                                ":" +
+                                secs +
+                                "." +
+                                millis;
+
+                            categories.push(dateString);
+                            data.push(averageAge);
+                            this.setState({
+                                chart2Options: {
+                                    xAxis: {
+                                        title: {
+                                            text: "Timestamp",
+                                        },
+                                        categories: categories,
+                                    },
+                                    series: [{ name: "Average Age", data: data }],
+                                },
+                            });
+                        }
+                    }
+                );
             }
         };
     }
@@ -449,7 +528,70 @@ class Dashboard extends Component {
                                 {/* Recent Orders */}
                                 <Grid item xs={12}>
                                     <Paper className={classes.paper}>
-                                        <Orders />
+                                        <Title>Recent Customer Reviews</Title>
+                                        <Table size="small">
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableCell>Clothing ID</TableCell>
+                                                    <TableCell>Customer Age</TableCell>
+                                                    <TableCell>Title</TableCell>
+                                                    <TableCell>Review</TableCell>
+                                                    <TableCell>Recommended</TableCell>
+                                                    <TableCell>Positive Feedback</TableCell>
+                                                    <TableCell>Division</TableCell>
+                                                    <TableCell>Department</TableCell>
+                                                    <TableCell>Class</TableCell>
+                                                    <TableCell align="right">Rating</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {this.state.recentReviews.map((review) =>
+                                                    review !== undefined ? (
+                                                        <Fade in={review.show}>
+                                                            <TableRow key={review.id}>
+                                                                <TableCell>
+                                                                    {review.clothing_id}
+                                                                </TableCell>
+                                                                <TableCell>{review.age}</TableCell>
+                                                                <TableCell>
+                                                                    {review.title}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {review.review}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {review.recommended === 1
+                                                                        ? "Yes"
+                                                                        : "No"}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {review.positive_feedback}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {review.division}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {review.department}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {review.class_name}
+                                                                </TableCell>
+                                                                <TableCell align="right">
+                                                                    {review.rating}
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        </Fade>
+                                                    ) : (
+                                                        ""
+                                                    )
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                        <div className={classes.seeMore}>
+                                            <Link color="primary" href="#">
+                                                See more orders
+                                            </Link>
+                                        </div>
                                     </Paper>
                                 </Grid>
                             </Grid>
