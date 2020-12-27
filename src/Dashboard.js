@@ -141,34 +141,34 @@ class Dashboard extends Component {
         chart1Socket.onopen = () => {
             console.log("Chart 1 WebSocket Client Connected");
         };
-        chart2Socket.onopen = () => {
-            console.log("Chart 2 WebSocket Client Connected");
-        };
-        recentRatingsSocket.onopen = () => {
-            console.log("Recent Ratings WebSocket Client Connected");
-        };
+        // chart2Socket.onopen = () => {
+        //     console.log("Chart 2 WebSocket Client Connected");
+        // };
+        // recentRatingsSocket.onopen = () => {
+        //     console.log("Recent Ratings WebSocket Client Connected");
+        // };
 
-        recentRatingsSocket.onmessage = (message) => {
-            const data = JSON.parse(message.data);
-            console.log("recent ratings socket message received");
+        // recentRatingsSocket.onmessage = (message) => {
+        //     const data = JSON.parse(message.data);
+        //     console.log("recent ratings socket message received");
 
-            if (data.type === "rating") {
-                const { recentRatings } = this.state;
-                if (recentRatings.length >= 5) {
-                    recentRatings.shift();
-                }
-                recentRatings.push(data.message.after);
-                this.setState({
-                    recentRatings: recentRatings,
-                });
-            }
-        };
+        //     if (data.type === "rating") {
+        //         const { recentRatings } = this.state;
+        //         if (recentRatings.length >= 5) {
+        //             recentRatings.shift();
+        //         }
+        //         recentRatings.push(data.message.after);
+        //         this.setState({
+        //             recentRatings: recentRatings,
+        //         });
+        //     }
+        // };
     }
 
     componentWillUnmount() {
         chart1Socket.close();
-        chart2Socket.close();
-        recentRatingsSocket.close();
+        // chart2Socket.close();
+        // recentRatingsSocket.close();
     }
 
     handleDrawerOpen = () => {
@@ -225,7 +225,7 @@ class Dashboard extends Component {
                             if (data.type === "average_rating") {
                                 x = new Date(data.message.timestamp).getTime();
                                 y = data.message.average_rating;
-                                const shift = series.data.length > 100;
+                                const shift = series.data.length > 10;
                                 series.addPoint([x, y], true, shift);
                             }
                         };
