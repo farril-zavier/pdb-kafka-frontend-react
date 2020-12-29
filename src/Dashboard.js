@@ -127,6 +127,7 @@ const themePDB = createMuiTheme({
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const socket = new WebSocket("ws://" + window.location.hostname + ":8000" + "/visualization/");
+// const socket = new WebSocket("ws://" + '2e0bb275ca6f.ngrok.io' + "/visualization/");
 
 class Dashboard extends Component {
     constructor(props) {
@@ -557,7 +558,7 @@ class Dashboard extends Component {
                                                                     {review.title}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {review.review}
+                                                                    {review.review.split(' ').slice(0, 10).join(' ') + '...'}
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     {review.recommended === 1
@@ -582,8 +583,8 @@ class Dashboard extends Component {
                                                             </TableRow>
                                                         </Fade>
                                                     ) : (
-                                                        ""
-                                                    )
+                                                            ""
+                                                        )
                                                 )}
                                             </TableBody>
                                         </Table>

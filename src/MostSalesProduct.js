@@ -15,6 +15,20 @@ const useStyles = makeStyles({
     },
 });
 
+const getCurrentDate = (separator = ':') => {
+
+    let newDate = new Date();
+    let hours = newDate.getHours();
+    let minute = newDate.getMinutes();
+    let milisec = newDate.getSeconds();
+    let date = newDate.getDate();
+    let month = newDate.getMonth() + 1;
+    let year = newDate.getFullYear();
+
+    return `${hours}${separator}${minute < 10 ? `0${minute}` : `${minute}`}${separator}${milisec < 10 ? `0${milisec}` : `${milisec}`}`;
+    return `${year}${separator}${month < 10 ? `0${month}` : `${month}`}${separator}${date}`
+}
+
 export default function MostSalesProduct() {
     const classes = useStyles();
     const [data, setData] = useState({
@@ -23,6 +37,7 @@ export default function MostSalesProduct() {
     });
     const [text, setText] = useState("Loading..");
     const [productID, setProductID] = useState(0);
+    const [date, setDate] = useState('00:00:00');
     const [show, setShow] = useState(true);
     const [isPaused, setIsPaused] = useState(false);
     const [counter, setCounter] = useState(0);
@@ -30,6 +45,7 @@ export default function MostSalesProduct() {
 
     useEffect(() => {
         ws.current = new WebSocket("ws://" + window.location.hostname + ":8000" + "/visualization/");
+        // ws.current = new WebSocket("ws://" + '2e0bb275ca6f.ngrok.io' + "/visualization/");
         ws.current.onopen = () => console.log("ws openened");
         ws.current.onclose = () => console.log("ws closed");
         return () => {
@@ -60,6 +76,7 @@ export default function MostSalesProduct() {
         const timer = setTimeout(() => {
             setText(data.productName);
             setProductID(data.id);
+            setDate(getCurrentDate());
             setShow(true);
         }, 500);
         return () => clearTimeout(timer);
@@ -79,7 +96,7 @@ export default function MostSalesProduct() {
                 </Typography>
             </Fade>
             <Typography color="textSecondary" className={classes.depositContext}>
-                on 32 December, 2020
+                on {date}
             </Typography>
             <div>
                 <Link color="primary" href="#" onClick={preventDefault}>
